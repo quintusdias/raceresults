@@ -97,7 +97,7 @@ class ActiveRR(RaceResults):
         place = event.cssselect('.result-sub-location')[0].text.strip()
         date = event.cssselect('.result-extras .title')[0].tail.strip()
         print('Looking at {}, {}, {}'.format(name, place, date))
-        if not place.endswith(self.state):
+        if not self.state in place.split():
             print("\tSkipping, state mismatch.")
             return
 
