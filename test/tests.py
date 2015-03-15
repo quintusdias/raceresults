@@ -89,7 +89,7 @@ class TestSuite(unittest.TestCase):
                 
                 self.assertTrue("2.Jeff Pellis" in output)
 
-    def test_nyrr(self):
+    def nyrr_base_run(self):
         with tempfile.TemporaryDirectory() as tdir:
             with chdir(tdir):
                 args = ['', '-y', '2014', '-m', '12', '-d', '13', '13',
@@ -100,8 +100,25 @@ class TestSuite(unittest.TestCase):
                 with open('results.html') as fptr:
                     output = fptr.read()
                 
-                self.assertTrue("Redona" in output)
-                self.assertTrue("Leah" in output)
+                return output
+
+    def test_nyrr(self):
+        output = self.nyrr_base_run()
+
+        self.assertTrue("Redona" in output)
+        self.assertTrue("Leah" in output)
+
+
+    def test_nyrr_latin1_nbsp(self):
+        """
+        No latin-1 nbsp chars allowed.
+
+        Apparently the nyrr web pages have some latin1 chars.  Make sure they
+        are removed.
+        """
+        output = self.nyrr_base_run()
+
+        self.assertTrue("\xa0" not in output)
 
 
 
