@@ -4,7 +4,7 @@ import datetime as dt
 import logging
 import re
 
-from lxml import etree
+from lxml import etree, html
 import pandas as pd
 
 logging.basicConfig()
