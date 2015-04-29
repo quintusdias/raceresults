@@ -1,7 +1,11 @@
 """
 Module for parsing Compuscore race results.
 """
+import gzip
+import io
+import json
 import re
+import tempfile
 import warnings
 
 import requests
@@ -40,6 +44,21 @@ class CompuScore(RaceResults):
                        row['fname'] + '\s+' + row['lname'] + r'\b')
             row['regex'] = re.compile(pattern, re.IGNORECASE)
 
+    def get_json_from_url(self, url):
+        """
+        Parameters
+        ----------
+        url : str
+            URL with embedded gzipped json data
+        """
+        response = requests.get(url)
+
+        # Get the list of races from the json dump.  The json is gzipped.
+        with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gzf:
+            the_json = json.loads(gzf.read().decode('utf-8'))
+
+        return the_json
+
     def compile_web_results(self):
         """
         Download the race results in the requested time frame.
@@ -47,15 +66,16 @@ class CompuScore(RaceResults):
         fmt = 'http://www.compuscore.com/api/races/events?date_range={},{}'
         url = fmt.format(self.start_date.strftime('%Y-%m-%d'),
                          self.stop_date.strftime('%Y-%m-%d'))
-        response = requests.get(url)
 
-        # Get the list of races from the json dump.
-        for event in response.json()['events']:
+        the_json = self.get_json_from_url(url)
+
+        events = the_json['events']
+        for event in events:
 
             # Now get the race details, from where we get the race URL.
             url2 = 'http://www.compuscore.com/api/races/event-detail?ids={}'
             url2 = url2.format(event['id'])
-            details = requests.get(url2).json()
+            details = self.get_json_from_url(url2)
             race_name = details['events'][0]['name']
             print('Examining {}'.format(race_name))
             for sub_event in details['events'][0]['races']:
@@ -79,7 +99,11 @@ class CompuScore(RaceResults):
     def compile_race_results(self, resp):
         """
         """
-        doc = html.document_fromstring(resp.text)
+        # Gzipped content.
+        with gzip.GzipFile(fileobj=io.BytesIO(resp.content)) as gzf:
+            content = gzf.read()
+
+        doc = html.document_fromstring(content)
         self.html = resp.text
 
         # The prior <STRONG> element should have a <A NAME="overall"> element
