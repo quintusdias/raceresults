@@ -54,8 +54,14 @@ class CompuScore(RaceResults):
         response = requests.get(url)
 
         # Get the list of races from the json dump.  The json is gzipped.
-        with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gzf:
-            the_json = json.loads(gzf.read().decode('utf-8'))
+        try:
+            with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gzf:
+                the_json = json.loads(gzf.read().decode('utf-8'))
+            self.logger.debug('Content was gzipped')
+        except OSError:
+            # Ok, not gzipped.
+            the_json = response.json()
+            self.logger.debug('Content was not gzipped')
 
         return the_json
 
@@ -99,9 +105,15 @@ class CompuScore(RaceResults):
     def compile_race_results(self, resp):
         """
         """
-        # Gzipped content.
-        with gzip.GzipFile(fileobj=io.BytesIO(resp.content)) as gzf:
-            content = gzf.read()
+        try:
+            # Gzipped content.
+            with gzip.GzipFile(fileobj=io.BytesIO(resp.content)) as gzf:
+                content = gzf.read()
+            self.logger.debug('Content was gzipped')
+        except OSError:
+            # Ok, not gzipped
+            content = resp.content
+            self.logger.debug('Content was not gzipped')
 
         doc = html.document_fromstring(content)
         self.html = resp.text
