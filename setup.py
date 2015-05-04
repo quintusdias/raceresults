@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='raceresults',
-    version='0.1.1',
+    version='0.1.2',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     packages=find_packages(),
