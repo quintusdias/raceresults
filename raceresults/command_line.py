@@ -4,12 +4,16 @@ Command line interface to RR.
 
 import argparse
 import datetime
+import tempfile
+
+from lxml import etree, html
 
 from .active import ActiveRR
 from .brrr import BestRace
 from .crrr import CoolRunning
 from .csrr import CompuScore
 from .nyrr import NewYorkRR
+from .common import RaceResults
 
 
 def run_active():
@@ -220,6 +224,99 @@ def run_compuscore():
                    output_file=args.output_file,
                    verbose=args.verbose)
     o.run()
+
+
+def run_new_jersey():
+    # --ml cannot be used with -m, or -y
+    the_description = 'Process New Jersey race results'
+    parser = argparse.ArgumentParser(description=the_description)
+    group = parser.add_mutually_exclusive_group()
+    parser.add_argument('-y', '--year',
+                        dest='year',
+                        default=datetime.date.today().year,
+                        help='year')
+    parser.add_argument('-m', '--month',
+                        dest='month',
+                        default=datetime.date.today().month,
+                        choices=range(1, 13),
+                        type=int,
+                        help='month')
+    group.add_argument('-d', '--day',
+                       dest='day',
+                       default=[datetime.date.today().day,
+                                datetime.date.today().day],
+                       nargs=2,
+                       help='day range')
+    parser.add_argument('-v', '--verbose',
+                        dest='verbose',
+                        choices=['debug', 'info', 'warning', 'error',
+                                 'critical'],
+                        default='info',
+                        help='verbosity level, default is "info"')
+    parser.add_argument('-o', '--output',
+                        dest='output_file',
+                        default='results.html',
+                        help='output file, default is results.html')
+    parser.add_argument('--ml', dest='membership_list',
+                        help='membership list', required=True)
+
+    args = parser.parse_args()
+
+    rrobj = RaceResults(output_file=args.output_file)
+
+    year = int(args.year)
+    month = int(args.month)
+    day = args.day
+
+    start_date = datetime.date(year, month, int(day[0]))
+    stop_date = datetime.date(year, month, int(day[1]))
+
+    with tempfile.NamedTemporaryFile() as afile:
+        with tempfile.NamedTemporaryFile() as bfile:
+            with tempfile.NamedTemporaryFile() as cfile:
+                with tempfile.NamedTemporaryFile() as dfile:
+
+                    CompuScore(start_date=start_date,
+                               stop_date=stop_date,
+                               membership_list=args.membership_list,
+                               output_file=afile.name,
+                               verbose=args.verbose).run()
+                    BestRace(start_date=start_date,
+                             stop_date=stop_date,
+                             membership_list=args.membership_list,
+                             output_file=bfile.name,
+                             verbose=args.verbose).run()
+                    ActiveRR(date_range=[start_date, stop_date],
+                             membership_list=args.membership_list,
+                             verbose=args.verbose,
+                             states=['NY', 'NJ', 'PA'],
+                             output_file=cfile.name).run()
+                    NewYorkRR(start_date=start_date,
+                              stop_date=stop_date,
+                              team='RARI',
+                              output_file=dfile.name).run()
+
+                    # Rewind all four files.
+                    afile.seek(0)
+                    bfile.seek(0)
+                    cfile.seek(0)
+                    dfile.seek(0)
+
+                    rrobj.initialize_output_file()
+
+                    with open(args.output_file, 'rt') as ofile:
+                        odoc = html.document_fromstring(ofile.read())
+                    for tfile in [afile, bfile, cfile, dfile]:
+                        doc = html.document_fromstring(tfile.read())
+                        divs = doc.cssselect('div.race')
+                        for div in divs:
+                            odoc.append(div)
+
+                    result = etree.tostring(odoc, pretty_print=True,
+                                            method="html", encoding='unicode')
+
+                    with open(rrobj.output_file, 'w') as fptr:
+                        fptr.write(result)
 
 
 def run_nyrr():

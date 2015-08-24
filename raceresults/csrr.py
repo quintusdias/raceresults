@@ -91,7 +91,7 @@ class CompuScore(RaceResults):
         except IndexError:
             msg = "No <STRONG><PRE> element combination found.  Skipping..."
             warnings.warn(msg)
-            return 
+            return
 
         strong = pre.getprevious()
         lst = strong.cssselect('a[name="overall"]')
