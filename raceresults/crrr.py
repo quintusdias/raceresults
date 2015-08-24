@@ -5,7 +5,6 @@ import itertools
 import re
 import warnings
 
-import lxml
 from lxml import etree, html
 import requests
 

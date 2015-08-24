@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='raceresults',
-    version='0.1.2',
+    version='0.1.3',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     packages=find_packages(),
@@ -11,6 +11,7 @@ setup(
                             'brrr = raceresults.command_line:run_bestrace',
                             'crrr = raceresults.command_line:run_coolrunning',
                             'csrr = raceresults.command_line:run_compuscore',
+                            'njrr = raceresults.command_line:run_new_jersey',
                             'nyrr = raceresults.command_line:run_nyrr']},
     description='Race results parsing',
     install_requires=['lxml>=2.3.4',
