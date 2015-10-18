@@ -4,7 +4,7 @@ import datetime as dt
 import logging
 import re
 
-from lxml import etree
+from lxml import etree, html
 import pandas as pd
 
 logging.basicConfig()
@@ -134,7 +134,13 @@ class RaceResults:
 
         result = etree.tostring(root, pretty_print=True, method="html",
                                 encoding='unicode')
+
+        # Aids in readability.
         result = result.replace('\r', '\n')
+
+        # Replace latin-1 non-breaking space with a space.
+        result = result.replace('\xa0', ' ')
+
         with open(self.output_file, 'w') as fptr:
             fptr.write(result)
 

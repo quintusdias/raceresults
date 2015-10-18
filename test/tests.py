@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+from lxml import html
+
 from raceresults import command_line as cmd
  
 @contextlib.contextmanager  
@@ -28,6 +30,24 @@ class TestSuite(unittest.TestCase):
             for member in members:
                 fname, lname = member.split()
             writer.writerow({'FName': fname, 'LName': lname})
+
+    def test_nyrr_hr(self):
+        """
+        Verify that NYRR race results has a leading HR element
+        """
+        with tempfile.TemporaryDirectory() as tdir:
+            with chdir(tdir):
+                memb_file = os.path.join(tdir, 'test.csv')
+                self.create_membership_file(memb_file, ['Rosanne Lemongello'])
+                args = ['', '-y', '2015', '-m', '4', '-d', '19', '25',
+                        '-o', 'results.html']
+                with mock.patch('sys.argv', args):
+                    cmd.run_nyrr()
+
+                    with open('results.html', 'rt') as fptr:
+                        text = fptr.read()
+                    doc = html.document_fromstring(text)
+                    elt = doc.cssselect('hr')[0]
 
     def test_activerr_nj_mismatch(self):
         with tempfile.TemporaryDirectory() as tdir:
@@ -89,7 +109,7 @@ class TestSuite(unittest.TestCase):
                 
                 self.assertTrue("2.Jeff Pellis" in output)
 
-    def test_nyrr(self):
+    def nyrr_base_run(self):
         with tempfile.TemporaryDirectory() as tdir:
             with chdir(tdir):
                 args = ['', '-y', '2014', '-m', '12', '-d', '13', '13',
@@ -100,8 +120,25 @@ class TestSuite(unittest.TestCase):
                 with open('results.html') as fptr:
                     output = fptr.read()
                 
-                self.assertTrue("Redona" in output)
-                self.assertTrue("Leah" in output)
+                return output
+
+    def test_nyrr(self):
+        output = self.nyrr_base_run()
+
+        self.assertTrue("Redona" in output)
+        self.assertTrue("Leah" in output)
+
+
+    def test_nyrr_latin1_nbsp(self):
+        """
+        No latin-1 nbsp chars allowed.
+
+        Apparently the nyrr web pages have some latin1 chars.  Make sure they
+        are removed.
+        """
+        output = self.nyrr_base_run()
+
+        self.assertTrue("\xa0" not in output)
 
 
 

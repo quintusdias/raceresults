@@ -174,6 +174,7 @@ class NewYorkRR(RaceResults):
         span = etree.Element('span')
         span.text = 'Results courtesy of '
         pdiv.append(span)
+
         anchor = etree.Element('a')
         anchor.set('href', 'http://www.nyrr.org')
         anchor.text = 'New York Road Runners'
