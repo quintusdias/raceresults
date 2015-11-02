@@ -105,10 +105,9 @@ class RaceResults:
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
             # The first and last names must be separated by just white space.
-            pattern = ('\\b(?:' +
-                       df['fname'][j] + '|' + df['lname'][j] + ')' +
-                       '\\s+(?:'
-                       + df['lname'][j] + '|' + df['fname'][j] + ')\\b')
+            pattern = r'\b(?:{first}\s+{last})|(?:{last}\s+{first})\b'
+            pattern = pattern.format(first=df['fname'][j],
+                                     last=df['lname'][j])
 
             df['fname_lname_regex'][j] = re.compile(pattern, re.IGNORECASE)
 
