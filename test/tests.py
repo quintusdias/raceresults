@@ -99,6 +99,43 @@ class TestCRRR(unittest.TestCase):
                 
                 self.assertTrue("Marie Marie" not in output)
 
+    @mock.patch('raceresults.crrr.requests.get')
+    def test_crrr_annette_richards(self, mock_get):
+        """
+        Verify elimination of Annette Richards false positive
+
+        See issue #8
+        """
+        # First call to requests.get is for the state file for massachusetts
+        # for 2015
+        mock_response1 = mock.Mock()
+        fname = pkg.resource_filename(__name__, 'data/crrr/ma_20151101_annette_richard.shtml')
+        with open(fname, 'rt') as fptr:
+            mock_response1.text = fptr.read()
+
+        # 2nd call to requests.get is for the single race in the state file
+        mock_response2 = mock.Mock()
+        fname = pkg.resource_filename(__name__, 'data/crrr/Oct25_AlignC_set1.shtml')
+        with open(fname, 'rt') as fptr:
+            mock_response2.text = fptr.read()
+
+        mock_get.side_effect = [mock_response1, mock_response2]
+
+        with tempfile.TemporaryDirectory() as tdir:
+            with chdir(tdir):
+                memb_file = os.path.join(tdir, 'test.csv')
+                self.create_membership_file(memb_file, ['Richard Carlisle'])
+                args = ['', '-y', '2015', '-m', '10', '-d', '25', '25',
+                        '--ml', memb_file, '-o', 'results.html',
+                        '--verbose', 'warning']
+                with mock.patch('sys.argv', args):
+                    cmd.run_coolrunning()
+
+                with open('results.html') as fptr:
+                    output = fptr.read()
+                
+                self.assertTrue("ANNETTE RICHARD" not in output)
+
 class TestCSRR(unittest.TestCase):
 
     def create_membership_file(self, filename, members):
