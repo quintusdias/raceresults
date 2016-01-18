@@ -249,7 +249,8 @@ class NewYorkRR(RaceResults):
 
         req = urllib.request.Request(url)
         response = urllib.request.urlopen(req, params)
-        html = response.readall()
+        # html = response.readall()
+        html = response.read()
         try:
             html = html.decode('utf-8')
         except UnicodeDecodeError:
