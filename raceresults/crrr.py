@@ -193,11 +193,11 @@ class CoolRunning(RaceResults):
                 # Incomplete row, skip it.
                 continue
 
-            runner_name = tds[0].text
+            runner_name = tds[1].text
             if runner_name is None:
                 continue
             for _, regex in self.df['fname_lname_regex'].iteritems():
-                if regex.match(runner_name):
+                if regex.search(runner_name):
                     results.append(tr)
 
         if len(results) > 0:
