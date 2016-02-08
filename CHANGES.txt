@@ -1,3 +1,5 @@
+Feb 07, 2016 - v0.1.3  Update CCRR support for crrr again
+
 May 03, 2015 - v0.1.2  Support gzipped and non-gzipped content for CSRR
 
 Apr 29, 2015 - v0.1.1  Support gzipped content for CSRR
